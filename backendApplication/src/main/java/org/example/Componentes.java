@@ -19,71 +19,126 @@ import com.github.britooo.looca.api.group.sistema.Sistema;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
 
 public class Componentes {
     Conexao conexao = new Conexao();
     Looca looca = new Looca();
+   private volatile Integer pid = 0;
+   private volatile String IP = "";
+   private volatile Boolean parar = false;
+   private Scanner input = new Scanner(System.in);
+   private String cParar;
+
 
     public void Memoria() {
-        RedeParametros redeParametros = looca.getRede().getParametros();
-        Memoria memoria = looca.getMemoria();
-        Processador processador = looca.getProcessador();
-        ServicoGrupo servicoGrupo = looca.getGrupoDeServicos();
-        //Janela, tem titulo do da janela
-        List<Janela> janelaGrupo = looca.getGrupoDeJanelas().getJanelas();
-        //Disco do computador
-        List<Disco> discoGrupo = looca.getGrupoDeDiscos().getDiscos();
-
+        Thread thread = new Thread(() -> {
         //Sistema
         Sistema sistema = looca.getSistema();
         //Hostname da maquina
         String hostName = looca.getRede().getParametros().getHostName();
 
         //Lista de processos
-        ProcessoGrupo processoGrupo = looca.getGrupoDeProcessos();
-        List<Processo> listaDeProcessos = processoGrupo.getProcessos();
+            String respostaConexaoHost = conexao.verificarMaquina(hostName);
+            if (respostaConexaoHost.equals("Maquina não existe")) {
+                conexao.cadastrarMaquina(hostName);
+            } else {
+                if (respostaConexaoHost.equals("Maquina existe") && parar==false){
+                    System.out.println("""
+                 O monitoramendo do seu hardwere foi executado com sucesso!
+                            """);
+                    pararCaptura();
+                }
+                while (respostaConexaoHost.equals("Maquina existe") && !parar) {
 
-        Integer pid = 0;
-        String IP = "";
-        String memoriaEmUso = extrairProcessadorEmUso(processador);
-        String identificador = extrairIdentificadorMaquina(processador);
+                    RedeParametros redeParametros = looca.getRede().getParametros();
+                    Memoria memoria = looca.getMemoria();
+                    Processador processador = looca.getProcessador();
+                    ServicoGrupo servicoGrupo = looca.getGrupoDeServicos();
+                    //Janela, tem titulo do da janela
+                    List<Janela> janelaGrupo = looca.getGrupoDeJanelas().getJanelas();
+                    //Disco do computador
+                    List<Disco> discoGrupo = looca.getGrupoDeDiscos().getDiscos();
 
-        try {
-            InetAddress inetAddress = InetAddress.getLocalHost();
-            String ipAddress = inetAddress.getHostAddress();
-            IP = ipAddress;
-        } catch (UnknownHostException e) {
-            e.printStackTrace();
-        }
-        long maiorMemoriaVirtual = 0;
-        int pidMaiorMemoriaVirtual = 0;
+                    ProcessoGrupo processoGrupo = looca.getGrupoDeProcessos();
+                    List<Processo> listaDeProcessos = processoGrupo.getProcessos();
 
-        for (Processo processo : listaDeProcessos) {
-            long memoriaVirtual = extrairMemoriaVirtual(processo);
-            if (memoriaVirtual > maiorMemoriaVirtual) {
-                maiorMemoriaVirtual = memoriaVirtual;
-                pidMaiorMemoriaVirtual = processo.getPid();
-                pid = pidMaiorMemoriaVirtual;
-            }
-        }
-        List dadosInformados = new ArrayList<>();
-        dadosInformados.add(maiorMemoriaVirtual);
-        dadosInformados.add(pidMaiorMemoriaVirtual);
 
-        String respostaConexaoHost = conexao.verificarMaquina(hostName);
-        if(respostaConexaoHost.equals("Maquina não existe")) {
-            conexao.cadastrarMaquina(hostName);
-        }else {
-            while (respostaConexaoHost.equals("Maquina existe")) {
-                conexao.ComponenteMemoria(memoria, processador, servicoGrupo, janelaGrupo, discoGrupo, sistema, pid,IP, hostName);
-                try {
-                    Thread.sleep(5000);  // Pausa de 5 segundos
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
+                    String memoriaEmUso = extrairProcessadorEmUso(processador);
+                    String identificador = extrairIdentificadorMaquina(processador);
+
+                    try {
+                        InetAddress inetAddress = InetAddress.getLocalHost();
+                        String ipAddress = inetAddress.getHostAddress();
+                        IP = ipAddress;
+                    } catch (UnknownHostException e) {
+                        e.printStackTrace();
+                    }
+                    long maiorMemoriaVirtual = 0;
+                    int pidMaiorMemoriaVirtual = 0;
+
+                    for (Processo processo : listaDeProcessos) {
+                        long memoriaVirtual = extrairMemoriaVirtual(processo);
+                        if (memoriaVirtual > maiorMemoriaVirtual) {
+                            maiorMemoriaVirtual = memoriaVirtual;
+                            pidMaiorMemoriaVirtual = processo.getPid();
+                            pid = pidMaiorMemoriaVirtual;
+                        }
+                    }
+                    List dadosInformados = new ArrayList<>();
+                    dadosInformados.add(maiorMemoriaVirtual);
+                    dadosInformados.add(pidMaiorMemoriaVirtual);
+
+                    conexao.ComponenteMemoria(memoria, processador, servicoGrupo, janelaGrupo, discoGrupo, sistema, pid, IP, hostName);
+
+                    try {
+                        Thread.sleep(5000);  // Pausa de 5 segundos
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
+        });
+        thread.start();
+    }
+
+    public void pararCaptura(){
+        System.out.println("""
+               Para encerrar o monitoramento, digite 'c'
+               """);
+        cParar = input.nextLine();
+
+        if (cParar .equalsIgnoreCase("c")){
+            parar = true;
+            System.out.println("""
+                   Encerrando captura ...
+                   
+                   Sua captura foi encerrada.
+                   """);
+            voltarMonitoramento();
+        }else{
+            pararCaptura();
         }
     }
+
+    public void voltarMonitoramento (){
+        System.out.println("""
+               Para retornar o monitoramento do sofware, digite 'v'
+               """);
+        cParar = input.nextLine();
+        if (cParar.equalsIgnoreCase("v")){
+            System.out.println("""
+                    Estamos retornando as capturas, isso pode levar algum tempo ...
+                    """);
+            parar = false;
+            Memoria();
+
+        }else {
+            voltarMonitoramento();
+        }
+
+    }
+
     private long extrairMemoriaVirtual(Processo processo) {
         String[] partes = processo.toString().split("Memória virtual utilizada: ");
         if (partes.length > 1) {

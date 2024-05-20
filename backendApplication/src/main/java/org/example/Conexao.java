@@ -138,7 +138,9 @@ public class Conexao {
                     insert into registro(cpuPorcentagem, ramPorcentagem, discoPorcentagem, pid, fkMaquinaDarksore,fkMaquina) values("%s","%s","%s",%d,%d,%d);
                     """.formatted(dadosProcessador,dadosMemoria, dadosDisco,pid, idDark,idMaquina));
             if(respostaServer == 1 || respostaServer.equals(1)) {
-                System.out.println("Dados capturados com sucesso !");
+//                System.out.println("""
+//                        Seu hardwere esta sendo monitorado com sucesso !
+//                        """);
             }else {
                 System.out.println("Erro ao cadastrar os dados");
             }

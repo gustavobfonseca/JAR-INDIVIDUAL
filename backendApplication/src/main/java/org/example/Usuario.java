@@ -4,7 +4,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class Usuario {
-    Conexao conexao = new Conexao();
+    ConexaoLocal conexao = new ConexaoLocal();
      String validarUser(String email, String senha) {
        if(email == "" || senha == "") {
            return "ERRO! Insira todos os dados";

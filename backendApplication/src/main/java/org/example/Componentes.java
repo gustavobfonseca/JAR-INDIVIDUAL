@@ -20,7 +20,7 @@ import com.slack.api.webhook.WebhookResponse;
 
 public class Componentes {
     Usuario usuario = new Usuario();
-    Conexao conexao = new Conexao();
+    ConexaoLocal conexao = new ConexaoLocal();
     Looca looca = new Looca();
     private volatile String IP = "";
     private volatile Boolean parar = false;
@@ -108,7 +108,7 @@ public class Componentes {
                 cParar = input.nextLine();
                 if (cParar.equalsIgnoreCase("c")) {
                     parar = true;
-                    System.out.println("Encerrando captura...\nSua captura foi encerrada.");
+                    System.out.println("Sua captura foi encerrada.");
                     voltarMonitoramento();
                 }
             }

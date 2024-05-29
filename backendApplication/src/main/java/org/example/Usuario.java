@@ -16,7 +16,7 @@ public class Usuario {
     public void respostaUser(ResultSet respostaServer, String email, String senha) throws SQLException {
         if(respostaServer.getString("email").equals(email) && respostaServer.getString("senha").equals(senha)) {
             Componentes componentes = new Componentes();
-            componentes.Memoria();
+            componentes.capturarDados();
         }
     }
 }

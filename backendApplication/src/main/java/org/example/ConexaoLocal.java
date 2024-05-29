@@ -13,15 +13,16 @@ import java.util.List;
 
 public class ConexaoLocal {
     Looca looca = new Looca();
-    public Integer idDark;
-    public Integer idEmpresa;
-    public Integer idMaquina = null;
-    private final String localhost = "jdbc:mysql://localhost/sisguard";
-    private final String userL = "root";
-    private final String passwordL = "sptech";
+    private Integer idDark;
+    private Integer idEmpresa;
+    private Integer idMaquina = null;
+    private String localhost = "jdbc:mysql://localhost/sisguard";
+    private  String userL = "root";
+    private  String passwordL = "sptech";
     private String canal = null;
+    private String nomeSlack=null;
 
-    private String WEBHOOK_URL = "https://hooks.slack.com/services/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";
+    private String WEBHOOK_URL = "https://hooks.slack.com/services/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";
     private String USERNAME = looca.getRede().getParametros().getHostName();
     private String CHANNEL = obterCanalDoBancoDeDados();
     private String MESSAGE_TEXT = "!!! Alerta automático de 5 em 5 segundos!!!";
@@ -102,7 +103,7 @@ public class ConexaoLocal {
 
             if (respostaBanco == 1) {
                 Componentes componentes = new Componentes();
-                componentes.Memoria();
+                componentes.capturarDados();
                 return "Maquina cadastrada com sucesso";
             } else {
                 return "Maquina não cadastrada";
@@ -180,6 +181,11 @@ public class ConexaoLocal {
         }
     }
 
+    public String cadastrarNomeSlack(){
+
+        return null;
+    }
+
     public Integer getIdDark() {
         return idDark;
     }
@@ -238,5 +244,53 @@ public class ConexaoLocal {
 
     public String getMESSAGE_TEXT() {
         return MESSAGE_TEXT;
+    }
+
+    public Looca getLooca() {
+        return looca;
+    }
+
+    public void setLooca(Looca looca) {
+        this.looca = looca;
+    }
+
+    public String getNomeSlack() {
+        return nomeSlack;
+    }
+
+    public void setNomeSlack(String nomeSlack) {
+        this.nomeSlack = nomeSlack;
+    }
+
+    public void setWEBHOOK_URL(String WEBHOOK_URL) {
+        this.WEBHOOK_URL = WEBHOOK_URL;
+    }
+
+    public void setUSERNAME(String USERNAME) {
+        this.USERNAME = USERNAME;
+    }
+
+    public void setCHANNEL(String CHANNEL) {
+        this.CHANNEL = CHANNEL;
+    }
+
+    public void setMESSAGE_TEXT(String MESSAGE_TEXT) {
+        this.MESSAGE_TEXT = MESSAGE_TEXT;
+    }
+
+    public void setLocalhost(String localhost) {
+        this.localhost = localhost;
+    }
+
+    public void setUserL(String userL) {
+        this.userL = userL;
+    }
+
+    public void setPasswordL(String passwordL) {
+        this.passwordL = passwordL;
+    }
+
+    public Statement createStatement() {
+        return null;
     }
 }

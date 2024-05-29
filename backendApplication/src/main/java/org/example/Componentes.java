@@ -5,6 +5,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.List;
 import java.util.Scanner;
+
 import com.github.britooo.looca.api.core.Looca;
 import com.github.britooo.looca.api.group.discos.Disco;
 import com.github.britooo.looca.api.group.janelas.Janela;
@@ -15,18 +16,20 @@ import com.github.britooo.looca.api.group.rede.RedeParametros;
 import com.github.britooo.looca.api.group.servicos.ServicoGrupo;
 import com.github.britooo.looca.api.group.sistema.Sistema;
 import com.slack.api.Slack;
-import com.slack.api.webhook.Payload;
-import com.slack.api.webhook.WebhookResponse;
 
 public class Componentes {
+    MetricasAlerta metricasAlerta = new MetricasAlerta(new ConexaoLocal());
     Usuario usuario = new Usuario();
-    ConexaoLocal conexao = new ConexaoLocal();
+    ConexaoLocal conexaoLocal = new ConexaoLocal();
     Looca looca = new Looca();
     private volatile String IP = "";
     private volatile Boolean parar = false;
     private Thread inputThread;
 
-    public void Memoria() {
+
+
+
+    public void capturarDados() {
         // Sistema
         Sistema sistema = looca.getSistema();
         // Hostname da máquina
@@ -51,9 +54,9 @@ public class Componentes {
         }
 
         // Lista de processos
-        String respostaConexaoHost = conexao.verificarMaquina(hostName);
+        String respostaConexaoHost = conexaoLocal.verificarMaquina(hostName);
         if (respostaConexaoHost.equals("Maquina não existe")) {
-            conexao.cadastrarMaquina(hostName);
+            conexaoLocal.cadastrarMaquina(hostName);
         } else {
             if (respostaConexaoHost.equals("Maquina existe") && !parar) {
                 Thread capturaThread = new Thread(() -> {
@@ -80,8 +83,8 @@ public class Componentes {
                                 pid = pidMaiorMemoriaVirtual;
                             }
                         }
-                        conexao.ComponenteMemoria(memoria, processador, servicoGrupo, janelaGrupo, discoGrupo, sistema, pid, IP, hostName);
-//                        enviarMensagem();
+                        conexaoLocal.ComponenteMemoria(memoria, processador, servicoGrupo, janelaGrupo, discoGrupo, sistema, pid, IP, hostName);
+                        metricasAlerta.verificarMetricaAlertas();
                         try {
                             Thread.sleep(5000);  // Pausa de 5 segundos
                         } catch (InterruptedException e) {
@@ -124,7 +127,7 @@ public class Componentes {
             System.out.println("Estamos retornando as capturas, isso pode levar algum tempo ...");
             System.out.println("");
             parar = false;
-            Memoria();
+            capturarDados();
         } else {
             voltarMonitoramento();
         }
@@ -177,26 +180,7 @@ public class Componentes {
         return "";
     }
 
-    public void enviarMensagem() {
-        Slack slack = Slack.getInstance();
-        Payload payload = Payload.builder()
-                .channel(conexao.getCHANNEL())
-                .username(conexao.getUSERNAME())
-                .text("capturando e mandando de 5 em 5 seg")
-                .build();
-        if (conexao.getUSERNAME() != null && conexao.getCHANNEL() != null) {
-            try {
-                WebhookResponse response = slack.send(conexao.getWEBHOOK_URL(), payload);
-                if (response.getCode() == 200) {
-                    // Mensagem enviada com sucesso
-                } else {
-                    System.err.println("Erro ao enviar mensagem para o Slack: " + response.getMessage());
-                }
-            } catch (IOException e) {
-                System.err.println("Erro ao enviar mensagem para o Slack: " + e.getMessage());
-            }
-        } else {
-            System.out.println("Erro de credencial na configuração do Slack");
-        }
+
     }
-}
+
+

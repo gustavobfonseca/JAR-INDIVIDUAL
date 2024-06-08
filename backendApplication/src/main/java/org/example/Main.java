@@ -8,8 +8,10 @@ import com.github.britooo.looca.api.group.sistema.Sistema;
 import java.util.Scanner;
 
 public class Main {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         Usuario usuario = new Usuario();
+        String respostaBanco = null;
+        Boolean conectado = false;
         System.out.println("""
                                                              ,+--------+
                         ,-----------------------,          ,"        ,"|          
@@ -31,19 +33,16 @@ public class Main {
                 /_==__==========__==_ooo__ooo=_/'   /___________,"                
                 `-----------------------------'
                            """);
+            Scanner perguntaUser = new Scanner(System.in);
+            System.out.println("Insira o e-mail:");
+            String email = perguntaUser.nextLine();
+            System.out.println("");
+            System.out.println("Insira a senha:");
+            String senha = perguntaUser.nextLine();
+            System.out.println("");
 
-        Scanner perguntaUser = new Scanner(System.in);
-        System.out.println("Insira o e-mail?");
-        String email = perguntaUser.nextLine();
-        System.out.println("");
-        System.out.println("Insira a senha?");
-        String senha = perguntaUser.nextLine();
-        System.out.println("");
-
-        String respostaBanco = usuario.validarUser(email, senha);
-
-        System.out.println(respostaBanco);
-
-
+            respostaBanco = usuario.validarUser(email, senha);
+            conectado = usuario.getConectado();
+            System.out.println(respostaBanco);
+        }
     }
-}

@@ -1,8 +1,8 @@
 package org.example;
 
 import com.github.britooo.looca.api.core.Looca;
-import com.github.britooo.looca.api.group.discos.Volume;
-// import com.github.britooo.looca.api.group.discos.VolumeGrupo;
+import com.github.britooo.looca.api.group.memoria.Memoria;
+import com.github.britooo.looca.api.group.processador.Processador;
 import com.slack.api.Slack;
 import com.slack.api.webhook.Payload;
 import com.slack.api.webhook.WebhookResponse;
@@ -12,17 +12,17 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.List;
 
 public class MetricasAlerta {
-    Componentes componentes = new Componentes();
     ConexaoLocal conexaoLocal = new ConexaoLocal();
-    Looca looca = new Looca();
     Slack slack = Slack.getInstance();
-    private String mensagem;
 
-    private final Double alertaPadrao = 10.0;
-    private final Double criticoPadrao = 20.0;
+    private String mensagemCPU = null;
+    private String mensagemDisco = null;
+    private String mensagemRAM = null;
+
+    private Double alertaPadrao = null;
+    private Double criticoPadrao = null;
     private Double alertaRAM = null;
     private Double alertaCPU = null;
     private Double alertaDisco = null;
@@ -41,18 +41,51 @@ public class MetricasAlerta {
         } catch (ClassNotFoundException e) {
             System.err.println("Erro ao carregar o driver JDBC: " + e.getMessage());
         }
+
     }
 
-    public Double capturarAlertaRam(String fkDarkstore) {
-        if (fkDarkstore.isEmpty()) {
-            System.out.println("Darkstore inválida");
-            return null;
-        }
-
-        try (Connection conexaoBanco = DriverManager.getConnection(conexaoLocal.getLocalhost(), conexaoLocal.getUserL(), conexaoLocal.getPasswordL())) {
+    public Double capturarAlertaPadrao() {
+        try (Connection conexaoBanco = DriverManager.getConnection(conexaoLocal.getLocalhost(), conexaoLocal.getUserL(),
+                conexaoLocal.getPasswordL())) {
             ResultSet respostaServer = conexaoBanco.createStatement().executeQuery(
-                    "select alertaRAM from metrica_ideal where fkDarkStore = " + idDark + ";"
-            );
+                    "select alertaPadrao from metrica_ideal where fkDarkStore = " + idDark + ";");
+
+            if (respostaServer.next()) {
+                alertaPadrao = respostaServer.getDouble("alertaPadrao");
+            } else {
+                System.out.println("Não consegui capturar as metricas do alertaPadrao");
+                return alertaPadrao;
+            }
+        } catch (SQLException ex) {
+            System.out.println("Erro ao conectar ao banco de dados: " + ex.getMessage());
+        }
+        return alertaPadrao;
+    }
+
+    public Double capturarCriticoPadrao() {
+        try (Connection conexaoBanco = DriverManager.getConnection(conexaoLocal.getLocalhost(), conexaoLocal.getUserL(),
+                conexaoLocal.getPasswordL())) {
+            ResultSet respostaServer = conexaoBanco.createStatement().executeQuery(
+                    "select criticoPadrao from metrica_ideal where fkDarkStore = " + idDark + ";");
+
+            if (respostaServer.next()) {
+                criticoPadrao = respostaServer.getDouble("criticoPadrao");
+            } else {
+                System.out.println("Não consegui capturar as metricas do criticoPadrao");
+                return criticoPadrao;
+            }
+        } catch (SQLException ex) {
+            System.out.println("Erro ao conectar ao banco de dados: " + ex.getMessage());
+        }
+        return criticoPadrao;
+    }
+
+
+    public Double capturarAlertaRam() {
+        try (Connection conexaoBanco = DriverManager.getConnection(conexaoLocal.getLocalhost(), conexaoLocal.getUserL(),
+                conexaoLocal.getPasswordL())) {
+            ResultSet respostaServer = conexaoBanco.createStatement().executeQuery(
+                    "select alertaRAM from metrica_ideal where fkDarkStore = " + idDark + ";");
 
             if (respostaServer.next()) {
                 alertaRAM = respostaServer.getDouble("alertaRAM");
@@ -66,16 +99,11 @@ public class MetricasAlerta {
         return alertaRAM;
     }
 
-    public Double capturarCriticoRam(String fkDarkstore) {
-        if (fkDarkstore.isEmpty()) {
-            System.out.println("Darkstore inválida");
-            return null;
-        }
-
-        try (Connection conexaoBanco = DriverManager.getConnection(conexaoLocal.getLocalhost(), conexaoLocal.getUserL(), conexaoLocal.getPasswordL())) {
+    public Double capturarCriticoRam() {
+        try (Connection conexaoBanco = DriverManager.getConnection(conexaoLocal.getLocalhost(), conexaoLocal.getUserL(),
+                conexaoLocal.getPasswordL())) {
             ResultSet respostaServer = conexaoBanco.createStatement().executeQuery(
-                    "select criticoRAM from metrica_ideal where fkDarkStore = " + idDark + ";"
-            );
+                    "select criticoRAM from metrica_ideal where fkDarkStore = " + idDark + ";");
 
             if (respostaServer.next()) {
                 criticoRAM = respostaServer.getDouble("criticoRAM");
@@ -89,18 +117,88 @@ public class MetricasAlerta {
         return criticoRAM;
     }
 
-    public Boolean esperar5Minutos(Boolean esperar) {
+    public Double capturarAlertaCpu() {
+        try (Connection conexaoBanco = DriverManager.getConnection(conexaoLocal.getLocalhost(), conexaoLocal.getUserL(),
+                conexaoLocal.getPasswordL())) {
+            ResultSet respostaServer = conexaoBanco.createStatement().executeQuery(
+                    "select alertaCPU from metrica_ideal where fkDarkStore = " + idDark + ";");
+
+            if (respostaServer.next()) {
+                alertaCPU = respostaServer.getDouble("alertaCPU");
+            } else {
+                System.out.println("Não consegui capturar as metricas do alertaCPU");
+                return alertaCPU;
+            }
+        } catch (SQLException ex) {
+            System.out.println("Erro ao conectar ao banco de dados: " + ex.getMessage());
+        }
+        return alertaCPU;
+    }
+
+    public Double capturarCriticoCpu() {
+        try (Connection conexaoBanco = DriverManager.getConnection(conexaoLocal.getLocalhost(), conexaoLocal.getUserL(),
+                conexaoLocal.getPasswordL())) {
+            ResultSet respostaServer = conexaoBanco.createStatement().executeQuery(
+                    "select criticoCPU from metrica_ideal where fkDarkStore = " + idDark + ";");
+
+            if (respostaServer.next()) {
+                criticoCPU = respostaServer.getDouble("criticoCPU");
+            } else {
+                System.out.println("Não consegui capturar as metricas do criticoCPU");
+                return criticoCPU;
+            }
+        } catch (SQLException ex) {
+            System.out.println("Erro ao conectar ao banco de dados: " + ex.getMessage());
+        }
+        return criticoCPU;
+    }
+
+    public Double capturarAlertaDisco() {
+        try (Connection conexaoBanco = DriverManager.getConnection(conexaoLocal.getLocalhost(), conexaoLocal.getUserL(),
+                conexaoLocal.getPasswordL())) {
+            ResultSet respostaServer = conexaoBanco.createStatement().executeQuery(
+                    "select alertaDisco from metrica_ideal where fkDarkStore = " + idDark + ";");
+
+            if (respostaServer.next()) {
+                alertaDisco = respostaServer.getDouble("alertaDisco");
+            } else {
+                System.out.println("Não consegui capturar as metricas do alertaDisco");
+                return alertaDisco;
+            }
+        } catch (SQLException ex) {
+            System.out.println("Erro ao conectar ao banco de dados: " + ex.getMessage());
+        }
+        return alertaDisco;
+    }
+
+    public Double capturarCriticoDisco() {
+        try (Connection conexaoBanco = DriverManager.getConnection(conexaoLocal.getLocalhost(), conexaoLocal.getUserL(),
+                conexaoLocal.getPasswordL())) {
+            ResultSet respostaServer = conexaoBanco.createStatement().executeQuery(
+                    "select criticoDisco from metrica_ideal where fkDarkStore = " + idDark + ";");
+
+            if (respostaServer.next()) {
+                criticoDisco = respostaServer.getDouble("criticoDisco");
+            } else {
+                System.out.println("Não consegui capturar as metricas do criticoDisco");
+                return criticoDisco;
+            }
+        } catch (SQLException ex) {
+            System.out.println("Erro ao conectar ao banco de dados: " + ex.getMessage());
+        }
+        return criticoDisco;
+    }
+
+    public Boolean esperar5Minutos(Boolean esperar, String mensagem) {
         if (!esperar) {
-            enviarMensagem(mensagem);
-            System.out.println(mensagem + " caso o problema persistir voltaremos em 5 minutos");
             new Thread(() -> {
                 try {
-                    Thread.sleep(300000);
-                    if (mensagem.contains("RAM")) {
+                    Thread.sleep(60000);
+                    if ( mensagem != null && mensagem.contains("RAM") ) {
                         esperarRAM = false;
-                    } else if (mensagem.contains("CPU")) {
+                    } else if (mensagem != null && mensagem.contains("CPU") ) {
                         esperarCPU = false;
-                    } else if (mensagem.contains("Disco")) {
+                    } else if ( mensagem != null && mensagem.contains("Disco")) {
                         esperarDisco = false;
                     }
                 } catch (InterruptedException e) {
@@ -110,6 +208,7 @@ public class MetricasAlerta {
         }
         return esperar;
     }
+
 
     public void enviarMensagem(String mensagem) {
         if (conexaoLocal.getUSERNAME() != null && conexaoLocal.getCHANNEL() != null) {
@@ -121,104 +220,165 @@ public class MetricasAlerta {
             try {
                 WebhookResponse response = slack.send(conexaoLocal.getWEBHOOK_URL(), payload);
                 if (response.getCode() == 200) {
+                    System.out.println("Mensagem enviada para o slack no canal: " + conexaoLocal.getCHANNEL() + ", "
+                            + conexaoLocal.getUSERNAME());
+                    System.out.println(mensagem);
+                    System.out.println("");
                 } else {
-                    System.err.println("Erro ao enviar mensagem para o Slack: " + response.getMessage());
+                    System.out.println("NÃO CONSEGUI MANDAR MSG NO SLACK");
                 }
             } catch (IOException e) {
-                System.err.println("Erro ao enviar mensagem para o Slack: " + e.getMessage());
+                System.err.println("Erro nas config. da mensagem para o Slack: " + e.getMessage());
             }
-        } else {
-            System.out.println("Erro de credencial na configuração do Slack");
         }
     }
 
-    public void verificarMetricaAlertas() {
-        double ramUso = ((double) looca.getMemoria().getEmUso() / looca.getMemoria().getTotal()) * 100;
-        double cpuUso = looca.getProcessador().getUso();
-        double discoUso = 0;
+    public void verificarMetricaAlertas(Memoria memoria, Processador processador) {
+        capturarAlertaPadrao();
+        capturarAlertaCpu();
+        capturarAlertaDisco();
+        capturarAlertaRam();
 
-        // Double grupoDeVolumes = looca.getGrupoDeVolumes();
-        // List<Volume> volumes = grupoDeVolumes.getVolumes();
+        capturarCriticoPadrao();
+        capturarCriticoCpu();
+        capturarCriticoDisco();
+        capturarCriticoRam();
 
-        // for (Volume volume : volumes) {
-        //     double total = volume.getTotal();
-        //     double disponivel = volume.getDisponivel();
-        //     double usado = total - disponivel;
-        //     discoUso += (usado / total) * 100 / volumes.size();
-        // }
+        double ramUso = ((double) memoria.getEmUso() / memoria.getTotal()) * 100;
+        double cpuUso = processador.getUso();
+        double discoUso = 40;
+        System.out.println("ram uso agr");
+        System.out.println(ramUso);
+        System.out.println("cpu uso");
+        System.out.println(cpuUso);
 
         if (alertaRAM != null) {
             if (ramUso >= alertaRAM && ramUso < criticoRAM) {
-                mensagem = "memória RAM em alerta, fique de olho !";
-                esperar5Minutos(esperarRAM);
-                esperarRAM = true;
+                String mensagemRAM = "memória RAM em alerta, fique de olho! Você está usando " + ramUso + "%";
+                if (esperar5Minutos(esperarRAM, mensagemRAM) == false) {
+                    enviarMensagem(mensagemRAM);
+                    System.out.println(mensagemRAM + " caso o problema persistir voltaremos em 5 minutos");
+                    esperarRAM = true;
+                }
 
             } else if (ramUso >= criticoRAM) {
-                mensagem = "memória RAM em estado crítico, fique de olho !";
-                esperar5Minutos(esperarRAM);
-                esperarRAM = true;
-            }
-        } else {
-            if (ramUso >= alertaPadrao && ramUso < criticoPadrao) {
-                mensagem = "memória RAM em alerta";
-                esperar5Minutos(esperarRAM);
-                esperarRAM = true;
+                String mensagemRAM = "memória RAM em estado crítico, fique de olho ! Você está usando " + ramUso + "%";
+                if (esperar5Minutos(esperarRAM, mensagemRAM) == false) {
+                    enviarMensagem(mensagemRAM);
+                    System.out.println(mensagemRAM + " caso o problema persistir voltaremos em 5 minutos");
+                    esperarRAM = true;
+                }
+            } else {
+                if (ramUso >= alertaPadrao && ramUso < criticoPadrao) {
+                    String mensagemRAM = "Memória RAM em alerta Você está usando " + ramUso + "%";
+                    if (esperar5Minutos(esperarRAM, mensagemRAM) == false) {
+                        enviarMensagem(mensagemRAM);
+                        System.out.println(mensagemRAM + " caso o problema persistir voltaremos em 5 minutos");
+                        esperarRAM = true;
+                    }
 
-            } else if (ramUso >= criticoPadrao) {
-                mensagem = "memória RAM em estado crítico";
-                esperar5Minutos(esperarRAM);
-                esperarRAM = true;
+                } else if (ramUso >= criticoPadrao) {
+                    String mensagemRAM = "memória RAM em estado crítico Você está usando " + ramUso + "%";
+                    if (esperar5Minutos(esperarRAM, mensagemRAM) == false) {
+                        enviarMensagem(mensagemRAM);
+                        System.out.println(mensagemRAM + " caso o problema persistir voltaremos em 5 minutos");
+                        esperarRAM = true;
+                    }
+                }
             }
         }
 
         if (alertaCPU != null) {
             if (cpuUso >= alertaCPU && cpuUso < criticoCPU) {
-                mensagem = "CPU em alerta, fique de olho !";
-                esperar5Minutos(esperarCPU);
-                esperarCPU = true;
+                String mensagemCPU = "CPU em alerta, fique de olho ! Você está usando " + cpuUso + "%";
+                if (esperar5Minutos(esperarCPU, mensagemCPU) == false) {
+                    enviarMensagem(mensagemCPU);
+                    System.out.println(mensagemCPU + " caso o problema persistir voltaremos em 5 minutos");
+                    esperarCPU = true;
+                }
 
             } else if (cpuUso >= criticoCPU) {
-                mensagem = "CPU em estado crítico, fique de olho !";
-                esperar5Minutos(esperarCPU);
-                esperarCPU = true;
+                String mensagemCPU = "CPU em estado crítico, fique de olho ! Você está usando" + cpuUso + "%";
+
+                if (esperar5Minutos(esperarCPU, mensagemCPU) == false) {
+                    enviarMensagem(mensagemCPU);
+                    System.out.println(mensagemCPU + " caso o problema persistir voltaremos em 5 minutos");
+                    esperarCPU = true;
+                }
+
             }
         } else {
             if (cpuUso >= alertaPadrao && cpuUso < criticoPadrao) {
-                mensagem = "CPU em alerta";
-                esperar5Minutos(esperarCPU);
-                esperarCPU = true;
+                String mensagemCPU = "CPU em alerta Você está usando" + cpuUso + "%";
+                if (esperar5Minutos(esperarCPU, mensagemCPU) == false) {
+                    enviarMensagem(mensagemCPU);
+                    System.out.println(mensagemCPU + " caso o problema persistir voltaremos em 5 minutos");
+                    esperarCPU = true;
+                }
+
 
             } else if (cpuUso >= criticoPadrao) {
-                mensagem = "CPU em estado crítico";
-                esperar5Minutos(esperarCPU);
-                esperarCPU = true;
+                String mensagemCPU = "CPU em estado crítico Você está usando" + cpuUso + "%";
+
+                if (esperar5Minutos(esperarCPU, mensagemCPU) == false) {
+                    enviarMensagem(mensagemCPU);
+                    System.out.println(mensagemCPU + " caso o problema persistir voltaremos em 5 minutos");
+                    esperarCPU = true;
+                }
+
             }
         }
 
         if (alertaDisco != null) {
             if (discoUso >= alertaDisco && discoUso < criticoDisco) {
-                mensagem = "Disco em alerta, fique de olho !";
-                esperar5Minutos(esperarDisco);
-                esperarDisco = true;
+                String mensagemDisco = "Disco em alerta Você está usando" + discoUso + "%";
+
+
+                if (esperar5Minutos(esperarDisco, mensagemDisco) == false) {
+                    enviarMensagem(mensagemDisco);
+                    System.out.println(mensagemDisco + " caso o problema persistir voltaremos em 5 minutos");
+                    esperarDisco = true;
+                }
 
             } else if (discoUso >= criticoDisco) {
-                mensagem = "Disco em estado crítico, fique de olho !";
-                esperar5Minutos(esperarDisco);
-                esperarDisco = true;
+                String mensagemDisco = "Disco em estado crítico Você está usando" + discoUso + "%";
+
+
+                if (esperar5Minutos(esperarDisco, mensagemDisco) == false) {
+                    enviarMensagem(mensagemDisco);
+                    System.out.println(mensagemDisco + " caso o problema persistir voltaremos em 5 minutos");
+                    esperarDisco = true;
+                }
             }
         } else {
             if (discoUso >= alertaPadrao && discoUso < criticoPadrao) {
-                mensagem = "Disco em alerta";
-                esperar5Minutos(esperarDisco);
-                esperarDisco = true;
+                String mensagemDisco = "Disco em alerta Você está usando" + discoUso + "%";
+
+
+                if (esperar5Minutos(esperarDisco, mensagemDisco) == false) {
+                    enviarMensagem(mensagemDisco);
+                    System.out.println(mensagemDisco + " caso o problema persistir voltaremos em 5 minutos");
+
+                } else {
+                    esperarDisco = true;
+                }
 
             } else if (discoUso >= criticoPadrao) {
-                mensagem = "Disco em estado crítico";
-                esperar5Minutos(esperarDisco);
-                esperarDisco = true;
+                String mensagemDisco = "Disco em estado crítico Você está usando" + discoUso + "%";
+
+
+                if (esperar5Minutos(esperarDisco, mensagemDisco) == false) {
+                    enviarMensagem(mensagemDisco);
+                    System.out.println(mensagemDisco + " caso o problema persistir voltaremos em 5 minutos");
+
+                } else {
+                    esperarDisco = true;
+                }
             }
         }
     }
+
+
 
     public ConexaoLocal getConexaoLocal() {
         return conexaoLocal;

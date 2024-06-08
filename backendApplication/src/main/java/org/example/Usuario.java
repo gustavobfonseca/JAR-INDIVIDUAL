@@ -4,6 +4,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class Usuario {
+    private Boolean conectado = false;
     ConexaoLocal conexao = new ConexaoLocal();
      String validarUser(String email, String senha) {
        if(email == "" || senha == "") {
@@ -17,6 +18,11 @@ public class Usuario {
         if(respostaServer.getString("email").equals(email) && respostaServer.getString("senha").equals(senha)) {
             Componentes componentes = new Componentes();
             componentes.capturarDados();
+            conectado = true;
         }
+    }
+
+    public Boolean getConectado() {
+        return conectado;
     }
 }

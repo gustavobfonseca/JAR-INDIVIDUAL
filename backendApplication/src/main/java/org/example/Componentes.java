@@ -84,9 +84,9 @@ public class Componentes {
                             }
                         }
                         conexaoLocal.ComponenteMemoria(memoria, processador, servicoGrupo, janelaGrupo, discoGrupo, sistema, pid, IP, hostName);
-                        metricasAlerta.verificarMetricaAlertas();
+                        metricasAlerta.verificarMetricaAlertas(memoria, processador);
                         try {
-                            Thread.sleep(5000);  // Pausa de 5 segundos
+                            Thread.sleep(250);
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }

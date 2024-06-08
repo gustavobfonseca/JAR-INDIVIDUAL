@@ -13,7 +13,8 @@ import java.util.List;
 
 public class ConexaoLocal {
     Looca looca = new Looca();
-    private Integer idDark;
+    static Usuario usuario = new Usuario();
+    private Integer idDark= pegarIdMaquina(looca.getRede().getParametros().getHostName());
     private Integer idEmpresa;
     private Integer idMaquina = null;
     private String localhost = "jdbc:mysql://localhost/sisguard";
@@ -22,7 +23,7 @@ public class ConexaoLocal {
     private String canal = null;
     private String nomeSlack=null;
 
-    private String WEBHOOK_URL = "https://hooks.slack.com/services/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";
+    private String WEBHOOK_URL = "https://hooks.slack.com/services/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";
     private String USERNAME = looca.getRede().getParametros().getHostName();
     private String CHANNEL = obterCanalDoBancoDeDados();
     private String MESSAGE_TEXT = "!!! Alerta automático de 5 em 5 segundos!!!";
@@ -38,6 +39,7 @@ public class ConexaoLocal {
     public void inicializarParametros(String hostname) {
 //        this.hostname = hostname;
         this.idMaquina = pegarIdMaquina(hostname);
+        this.idDark = pegarIdMaquina(hostname);
 
         if (this.idMaquina != null) {
             this.USERNAME = this.idMaquina.toString();
@@ -63,7 +65,6 @@ public class ConexaoLocal {
             );
 
             if (respostaServer.next()) {
-                Usuario usuario = new Usuario();
                 usuario.respostaUser(respostaServer, email, senha);
             } else {
                 System.out.println("E-mail ou senha incorretos");
